@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CashFlow — Salary & Expense Tracker</title>
+    <meta name="description" content="Professional cash flow tracker with real-time analytics, currency conversion, and PDF export." />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- jsPDF CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- App Stylesheet -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <!-- ── HEADER ───────────────────────────────────────────────── -->
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand">
+          <span class="brand-icon">◈</span>
+          <span class="brand-name">CashFlow</span>
+          <span class="brand-tag">TRACKER</span>
+        </div>
+        <div class="header-controls">
+          <div class="currency-wrap">
+            <label class="sr-only" for="currencySelect">Currency</label>
+            <select id="currencySelect" class="currency-select" aria-label="Select currency">
+              <option value="INR">₹ INR</option>
+              <option value="USD">$ USD</option>
+              <option value="EUR">€ EUR</option>
+            </select>
+            <span class="currency-status" id="currencyStatus" aria-live="polite"></span>
+          </div>
+          <button id="downloadPdf" class="btn btn-outline" aria-label="Download PDF report">
+            <span class="btn-icon">↓</span> Export PDF
+          </button>
+          <button id="themeToggle" class="btn btn-outline">
+  🌙
+</button>
+        </div>
+      </div>
+      
+      
+    </header>
+
+    <!-- ── MAIN LAYOUT ──────────────────────────────────────────── -->
+    <main class="app-main">
+
+      <!-- ── LEFT PANEL: Input & Expenses ── -->
+      <section class="panel panel-left" aria-label="Input and expenses">
+
+        <!-- Salary Card -->
+        <div class="card salary-card">
+          <div class="card-label">Monthly Salary</div>
+          <div class="salary-input-row">
+            <span class="input-prefix" id="salaryPrefix">₹</span>
+            <input
+              type="number"
+              id="salaryInput"
+              class="input-field salary-field"
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+              aria-label="Monthly salary amount"
+            />
+          </div>
+          <button id="saveSalary" class="btn btn-primary btn-block">Set Salary</button>
+        </div>
+
+        <!-- Add Expense Card -->
+        <div class="card expense-form-card">
+          <div class="card-label">Add Expense</div>
+          <div class="form-grid">
+            <div class="input-group">
+              <label class="input-label" for="expenseName">Description</label>
+              <input
+                type="text"
+                id="expenseName"
+                class="input-field"
+                placeholder="e.g. Netflix, Rent, Groceries"
+                maxlength="60"
+                aria-label="Expense description"
+              />
+            </div>
+            <div class="input-group">
+              <label class="input-label" for="expenseAmount">Amount</label>
+              <div class="amount-input-wrap">
+                <span class="input-prefix" id="expensePrefix">₹</span>
+                <input
+                  type="number"
+                  id="expenseAmount"
+                  class="input-field"
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                  aria-label="Expense amount"
+                />
+              </div>
+            </div>
+          </div>
+          <button id="addExpense" class="btn btn-accent btn-block">+ Add Expense</button>
+          <p class="form-error" id="formError" role="alert" aria-live="assertive"></p>
+        </div>
+
+        <!-- Expense List Card -->
+        <div class="card expense-list-card">
+          <div class="card-header-row">
+            <div class="card-label">Expense Log</div>
+            <span class="expense-count" id="expenseCount">0 items</span>
+          </div>
+          <div class="expense-list" id="expenseList" aria-label="List of expenses" role="list">
+            <!-- Populated by JS -->
+          </div>
+          <!-- Empty state -->
+          <div class="empty-state" id="emptyState" aria-hidden="false">
+            <div class="empty-icon">◎</div>
+            <p class="empty-title">No expenses yet</p>
+            <p class="empty-sub">Add your first expense above to get started.</p>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ── RIGHT PANEL: Stats & Chart ── -->
+      <section class="panel panel-right" aria-label="Summary and analytics">
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card stat-salary">
+            <div class="stat-label">Gross Salary</div>
+            <div class="stat-value" id="statSalary">—</div>
+            <div class="stat-raw" id="statSalaryRaw"></div>
+          </div>
+          <div class="stat-card stat-expenses">
+            <div class="stat-label">Total Expenses</div>
+            <div class="stat-value" id="statExpenses">—</div>
+            <div class="stat-bar-wrap">
+              <div class="stat-bar" id="expenseBar"></div>
+            </div>
+          </div>
+          <div class="stat-card stat-balance" id="statBalanceCard">
+            <div class="stat-label">Remaining Balance</div>
+            <div class="stat-value" id="statBalance">—</div>
+            <div class="stat-percent" id="statPercent"></div>
+          </div>
+        </div>
+
+        <!-- Budget Alert -->
+        <div class="budget-alert" id="budgetAlert" role="alert" aria-live="polite" hidden>
+          <span class="alert-icon">⚠</span>
+          <div class="alert-content">
+            <strong>Low Balance Warning</strong>
+            <p id="alertMessage">Your remaining balance is critically low.</p>
+          </div>
+        </div>
+
+        <!-- Chart Card -->
+        <div class="card chart-card">
+          <div class="card-label">Budget Distribution</div>
+          <div class="chart-wrap">
+            <canvas id="budgetChart" role="img" aria-label="Pie chart showing budget distribution"></canvas>
+            <div class="chart-placeholder" id="chartPlaceholder">
+              <span class="placeholder-icon">◑</span>
+              <p>Enter salary to see chart</p>
+            </div>
+          </div>
+          <div class="chart-legend" id="chartLegend"></div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ── TOAST NOTIFICATION ───────────────────────────────────── -->
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- ── MODULE SCRIPTS (ORDER MATTERS) ──────────────────────── -->
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
