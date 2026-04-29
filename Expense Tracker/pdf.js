@@ -72,7 +72,7 @@ const generatePDF = ({
   doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...C.amber);
-  doc.text('◈ CASHFLOW', MARGIN, 40);
+  doc.text('CASHFLOW', MARGIN, 40);
 
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
