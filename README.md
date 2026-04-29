@@ -48,12 +48,10 @@ Frankfurter API → Currency conversion
 
 📦 Setup Instructions
 
-Clone the repository.
-
-Run with a local server (VS Code Live Server / Python http.server / npx serve).
+Clone the repository: 
 
 Explore features like chart updates, PDF export, and currency conversion.
 
 🌐 Deployment
 
-Live Demo : 
+Live Demo : https://expense-tracker-eta-wine-70.vercel.app/
