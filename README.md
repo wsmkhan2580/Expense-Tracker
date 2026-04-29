@@ -48,7 +48,7 @@ Frankfurter API → Currency conversion
 
 📦 Setup Instructions
 
-Clone the repository: 
+Clone the repository: https://github.com/wsmkhan2580/Expense-Tracker.git
 
 Explore features like chart updates, PDF export, and currency conversion.
 
