@@ -5,18 +5,6 @@
  * using jsPDF (loaded via CDN on window.jspdf).
  */
 
-/**
- * Generates and downloads the expense report PDF.
- *
- * @param {object} params
- * @param {number}   params.salary            - Original INR salary
- * @param {number}   params.totalExpenses     - Original INR total expenses
- * @param {number}   params.remainingBalance  - Original INR balance
- * @param {Array}    params.expenses          - Expense objects { name, amount }
- * @param {string}   params.displayCurrency   - e.g. "INR"
- * @param {string}   params.symbol            - e.g. "₹"
- * @param {number}   params.rate              - Conversion rate from INR
- */
 const generatePDF = ({
   salary,
   totalExpenses,
@@ -56,7 +44,7 @@ const generatePDF = ({
     border:   [30, 42, 58],
   };
 
-  let y = 0; // current y cursor
+  let y = 0;
 
   // ── Background ───────────────────────────────────────────────
   doc.setFillColor(...C.bg);
@@ -68,18 +56,18 @@ const generatePDF = ({
   doc.setFillColor(...C.amber);
   doc.rect(0, 88, PAGE_W, 2, 'F');
 
-  // Brand
+  // ── Brand (FIXED HERE) ───────────────────────────────────────
   doc.setFontSize(22);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...C.amber);
-  doc.text('CASHFLOW', MARGIN, 40);
+  doc.text('CASHFLOW', MARGIN, 40); // ✅ removed special symbol
 
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...C.muted);
   doc.text('SALARY & EXPENSE TRACKER', MARGIN, 54);
 
-  // Date / currency info
+  // ── Date / currency info ─────────────────────────────────────
   doc.setFontSize(8);
   doc.setTextColor(...C.muted);
   const dateStr = NOW.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -91,10 +79,11 @@ const generatePDF = ({
 
   y = 110;
 
-  // ── Summary cards row ────────────────────────────────────────
+  // ── Summary cards ────────────────────────────────────────────
   const cardW   = (COL_W - 20) / 3;
   const cardH   = 62;
-  const cards   = [
+
+  const cards = [
     { label: 'Gross Salary',      value: fmt(salary),           accent: C.amber },
     { label: 'Total Expenses',    value: fmt(totalExpenses),     accent: C.red   },
     { label: 'Remaining Balance', value: fmt(remainingBalance),  accent: C.green },
@@ -103,21 +92,17 @@ const generatePDF = ({
   cards.forEach((card, i) => {
     const cx = MARGIN + i * (cardW + 10);
 
-    // Card bg
     doc.setFillColor(...C.surface);
     doc.roundedRect(cx, y, cardW, cardH, 4, 4, 'F');
 
-    // Top accent bar
     doc.setFillColor(...card.accent);
     doc.rect(cx, y, cardW, 2, 'F');
 
-    // Label
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...C.muted);
     doc.text(card.label.toUpperCase(), cx + 12, y + 18);
 
-    // Value
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...card.accent);
@@ -126,7 +111,7 @@ const generatePDF = ({
 
   y += cardH + 28;
 
-  // ── Section: Expense Breakdown ───────────────────────────────
+  // ── Expense Breakdown ────────────────────────────────────────
   doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...C.muted);
@@ -144,47 +129,40 @@ const generatePDF = ({
     doc.text('No expenses recorded.', MARGIN, y + 20);
     y += 50;
   } else {
-    // Table header
     doc.setFillColor(...C.surface);
     doc.rect(MARGIN, y, COL_W, 22, 'F');
 
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...C.muted);
-    doc.text('#',          MARGIN + 10, y + 14);
+    doc.text('#', MARGIN + 10, y + 14);
     doc.text('DESCRIPTION', MARGIN + 30, y + 14);
-    doc.text('AMOUNT',     PAGE_W - MARGIN - 10, y + 14, { align: 'right' });
+    doc.text('AMOUNT', PAGE_W - MARGIN - 10, y + 14, { align: 'right' });
     y += 22;
 
-    // Rows
     expenses.forEach((exp, idx) => {
       const rowH = 26;
 
-      // Alternating row bg
       if (idx % 2 === 0) {
         doc.setFillColor(20, 28, 40);
         doc.rect(MARGIN, y, COL_W, rowH, 'F');
       }
 
-      // Row number
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...C.muted);
       doc.text(String(idx + 1).padStart(2, '0'), MARGIN + 10, y + 16);
 
-      // Expense name
       doc.setTextColor(...C.white);
       const truncatedName = doc.splitTextToSize(exp.name, COL_W - 120)[0];
       doc.text(truncatedName, MARGIN + 30, y + 16);
 
-      // Amount
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...C.red);
       doc.text(fmt(exp.amount), PAGE_W - MARGIN - 10, y + 16, { align: 'right' });
 
       y += rowH;
 
-      // Page break guard
       if (y > PAGE_H - 100) {
         doc.addPage();
         doc.setFillColor(...C.bg);
@@ -193,7 +171,6 @@ const generatePDF = ({
       }
     });
 
-    // Total row
     y += 4;
     doc.setFillColor(...C.surface);
     doc.rect(MARGIN, y, COL_W, 28, 'F');
@@ -209,7 +186,7 @@ const generatePDF = ({
     y += 40;
   }
 
-  // ── Balance row ──────────────────────────────────────────────
+  // ── Remaining Balance ────────────────────────────────────────
   doc.setFillColor(...C.surface);
   doc.rect(MARGIN, y, COL_W, 28, 'F');
   doc.setFillColor(...C.green);
@@ -227,7 +204,12 @@ const generatePDF = ({
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...C.muted);
-  doc.text('CashFlow Tracker — Generated automatically. For personal use only.', PAGE_W / 2, PAGE_H - 28, { align: 'center' });
+  doc.text(
+    'CashFlow Tracker — Generated automatically. For personal use only.',
+    PAGE_W / 2,
+    PAGE_H - 28,
+    { align: 'center' }
+  );
 
   // ── Save ─────────────────────────────────────────────────────
   const filename = `cashflow-report-${NOW.toISOString().slice(0, 10)}.pdf`;
